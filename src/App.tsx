@@ -1,52 +1,74 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { AppShell } from './templates/AppShell';
-import { GestaoAlunos } from './components/organisms/GestaoAlunos';
-import { PainelMonitoria } from './components/organisms/PainelMonitoria';
+import { supabase } from './lib/supabase';
+import { get, mensagemDeErro } from './lib/api';
+import { useSessao } from './hooks/useSessao';
+import { AlunoSchema } from './contracts';
+import type { Aluno, IniciarTentativaResposta, ResultadoTentativa } from './contracts';
+import { Button } from './components/atoms/Button';
+import { Mensagem } from './components/molecules/Mensagem';
+import { LoginForm } from './components/organisms/LoginForm';
+import { ListaSimulados } from './components/organisms/ListaSimulados';
+import { ProvaSimulado } from './components/organisms/ProvaSimulado';
+import { ResultadoDiagnostico } from './components/organisms/ResultadoDiagnostico';
 import { HistoricoResultados } from './components/organisms/HistoricoResultados';
-import type { Aluno } from './contracts/index'; 
+import { PainelMonitoria } from './components/organisms/PainelMonitoria';
 
-export default function App() {
-  const [alunos, setAlunos] = useState<Aluno[]>([]);
+type Tela =
+  | { nome: 'home' }
+  | { nome: 'monitoria' }
+  | { nome: 'prova'; prova: IniciarTentativaResposta; fimEm: number }
+  | { nome: 'resultado'; resultado: ResultadoTentativa };
 
-  const carregarAlunos = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/alunos');
-      setAlunos(response.data);
-    } catch (error) {
-      console.error("Erro ao buscar alunos:", error);
-    }
-  };
+function AppAutenticado() {
+  const [aluno, setAluno] = useState<Aluno | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [tela, setTela] = useState<Tela>({ nome: 'home' });
 
+  // /me cria o cadastro no primeiro acesso; as demais telas só montam depois dele
   useEffect(() => {
-    carregarAlunos();
+    get('/me', AlunoSchema).then(setAluno).catch((e) => setErro(mensagemDeErro(e)));
   }, []);
 
   return (
-    <AppShell>
-      <div className="flex flex-col gap-8">
-        
-        {/* Bloco Superior: Ação Principal (Largura Total) */}
-        <div className="w-full">
-          <PainelMonitoria alunos={alunos} />
+    <AppShell usuario={aluno} aoSair={() => supabase.auth.signOut()}>
+      {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
+      {aluno && (tela.nome === 'home' || tela.nome === 'monitoria') && (
+        <div className="space-y-8">
+          {aluno.papel === 'PROFESSOR' && (
+            <div className="flex gap-2">
+              <Button variant={tela.nome === 'home' ? 'primary' : 'secondary'} onClick={() => setTela({ nome: 'home' })}>Simulados</Button>
+              <Button variant={tela.nome === 'monitoria' ? 'primary' : 'secondary'} onClick={() => setTela({ nome: 'monitoria' })}>Monitoria</Button>
+            </div>
+          )}
+          {tela.nome === 'home' ? (
+            <>
+              <ListaSimulados aoIniciar={(prova, fimEm) => setTela({ nome: 'prova', prova, fimEm })} />
+              <HistoricoResultados />
+            </>
+          ) : (
+            <PainelMonitoria />
+          )}
         </div>
-
-        {/* Bloco Inferior: Divisão entre Dados e Administração */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          
-          {/* Coluna Principal (2/3): Histórico de Resultados */}
-          <div className="lg:col-span-2">
-            <HistoricoResultados />
-          </div>
-          
-          {/* Coluna Secundária (1/3): Gestão Administrativa */}
-          <div className="lg:col-span-1">
-            <GestaoAlunos alunos={alunos} carregarAlunos={carregarAlunos} />
-          </div>
-          
-        </div>
-        
-      </div>
+      )}
+      {aluno && tela.nome === 'prova' && (
+        <ProvaSimulado
+          prova={tela.prova}
+          fimEm={tela.fimEm}
+          aoFinalizar={(resultado) => setTela({ nome: 'resultado', resultado })}
+        />
+      )}
+      {aluno && tela.nome === 'resultado' && (
+        <ResultadoDiagnostico resultado={tela.resultado} aoVoltar={() => setTela({ nome: 'home' })} />
+      )}
     </AppShell>
   );
+}
+
+export default function App() {
+  const { sessao, carregando } = useSessao();
+
+  if (carregando) return <AppShell><p className="text-slate-400">Carregando…</p></AppShell>;
+  if (!sessao) return <AppShell><LoginForm /></AppShell>;
+  return <AppAutenticado key={sessao.user.id} />;
 }

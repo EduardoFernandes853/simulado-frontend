@@ -1,103 +1,52 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
+import { api, get, mensagemDeErro } from '../../lib/api';
+import { ListaAlertasSchema } from '../../contracts';
+import type { AlertaMonitoria } from '../../contracts';
 import { Button } from '../atoms/Button';
-import type { Aluno, AlertaMonitoria } from '../../contracts/index';
+import { Card } from '../molecules/Card';
+import { Mensagem } from '../molecules/Mensagem';
 
-interface PainelMonitoriaProps {
-  alunos: Aluno[];
-}
+export function PainelMonitoria() {
+  const [alertas, setAlertas] = useState<AlertaMonitoria[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
 
-export function PainelMonitoria({ alunos }: PainelMonitoriaProps) {
-  const [alunoSelecionado, setAlunoSelecionado] = useState('');
-  const [pontuacao, setPontuacao] = useState('');
-  
-  const [alertaMonitoria, setAlertaMonitoria] = useState<AlertaMonitoria | null>(null);
+  const carregar = useCallback(() => {
+    get('/monitoria/alertas?status=PENDENTE', ListaAlertasSchema)
+      .then(setAlertas)
+      .catch((e) => setErro(mensagemDeErro(e)));
+  }, []);
 
-  const lancarResultado = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!alunoSelecionado) {
-      alert("Selecione um aluno primeiro!");
-      return;
-    }
+  useEffect(() => { carregar(); }, [carregar]);
 
-    const nota = Number(pontuacao);
-
+  async function atender(id: string) {
     try {
-      // Disparo real do Gatilho para o Backend
-      await axios.post('http://localhost:3000/resultados', {
-        alunoId: alunoSelecionado,
-        pontuacao: nota
-      });
-
-      // Feedback visual do App Shell
-      if (nota < 60) {
-        setAlertaMonitoria({ 
-          visivel: true, 
-          mensagem: "⚠️ ALERTA DE MONITORIA: Nota registrada no banco e aluno encaminhado.", 
-          critico: true 
-        });
-      } else {
-        setAlertaMonitoria({ 
-          visivel: true, 
-          mensagem: "✅ Desempenho satisfatório. Nota gravada com sucesso no PostgreSQL.", 
-          critico: false 
-        });
-      }
-      
-      setPontuacao('');
-      setAlunoSelecionado('');
-      setTimeout(() => setAlertaMonitoria(null), 5000);
-
-    } catch (error) {
-      console.error("Erro ao gravar resultado:", error);
-      alert("Erro ao conectar com o servidor. Verifique se o backend está rodando na porta 3000.");
+      await api.patch(`/monitoria/alertas/${id}/atender`);
+      carregar();
+    } catch (e) {
+      setErro(mensagemDeErro(e));
     }
-  };
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Detalhe visual alterado para verde (border-t-green-700) */}
-      <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200 border-t-4 border-t-green-700">
-        <h2 className="mb-4 text-xl font-semibold text-slate-700">Lançamento de Resultados</h2>
-        <p className="text-sm text-slate-500 mb-6">Insira a pontuação do simulado para acionar a análise de monitoria.</p>
-        
-        {/* Formulário alterado de flex-col para flex lado a lado */}
-        <form onSubmit={lancarResultado} className="flex gap-4">
-          <select 
-            value={alunoSelecionado} 
-            onChange={e => setAlunoSelecionado(e.target.value)} 
-            className="flex-1 rounded-md border border-slate-300 px-4 py-2 focus:border-green-600 focus:outline-none bg-white transition-colors"
-          >
-            <option value="">-- Selecione o Aluno --</option>
-            {alunos.map(aluno => (
-              <option key={aluno.id} value={aluno.id}>{aluno.nome}</option>
-            ))}
-          </select>
-          
-          <input 
-            type="number" 
-            placeholder="Pontuação (0 a 100)" 
-            value={pontuacao} 
-            onChange={e => setPontuacao(e.target.value)} 
-            className="w-48 rounded-md border border-slate-300 px-4 py-2 focus:border-green-600 focus:outline-none transition-colors" 
-            required 
-            min="0" max="100" 
-          />
-          
-          <Button type="submit" variant="secondary">Processar</Button>
-        </form>
-      </div>
-
-      {alertaMonitoria && (
-        <div className={`p-4 rounded-xl shadow-lg border-l-4 transition-all duration-300 ease-in-out ${alertaMonitoria.critico ? 'bg-red-50 border-red-500 text-red-800' : 'bg-emerald-50 border-emerald-500 text-emerald-800'}`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full ${alertaMonitoria.critico ? 'bg-red-100' : 'bg-emerald-100'}`}>
-              {alertaMonitoria.critico ? '🚨' : '🏆'}
+    <Card
+      titulo="Alertas de monitoria"
+      subtitulo="Alunos abaixo do limiar, aguardando encaminhamento."
+      acoes={<Button variant="secondary" onClick={carregar}>Atualizar</Button>}
+      destaque
+    >
+      {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
+      {alertas?.length === 0 && <p className="text-slate-400">Nenhum alerta pendente.</p>}
+      <ul className="divide-y divide-slate-100">
+        {alertas?.map((a) => (
+          <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <div>
+              <p className="font-medium text-slate-800">{a.aluno.nome} <span className="font-mono text-xs text-slate-400">{a.aluno.matricula}</span></p>
+              <p className="text-sm text-slate-500">{a.simulado} · nota {a.nota.toFixed(1)} (limiar {a.limiar}) · {new Date(a.criadoEm).toLocaleString('pt-BR')}</p>
             </div>
-            <p className="font-medium">{alertaMonitoria.mensagem}</p>
-          </div>
-        </div>
-      )}
-    </div>
+            <Button onClick={() => atender(a.id)}>Marcar como atendido</Button>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

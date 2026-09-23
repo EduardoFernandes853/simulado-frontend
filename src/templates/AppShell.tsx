@@ -1,28 +1,32 @@
-// src/templates/AppShell.tsx
-import React from 'react';
+import type { ReactNode } from 'react';
+import { Button } from '../components/atoms/Button';
+import { StatusSistema } from '../components/molecules/StatusSistema';
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+interface AppShellProps {
+  children: ReactNode;
+  usuario?: { nome: string; papel: string } | null;
+  aoSair?: () => void;
+}
+
+export function AppShell({ children, usuario, aoSair }: AppShellProps) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-      {/* Header Fixo Institucional */}
-      <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
+      <header className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">IFPA | Simulado Digital</h1>
-          <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold mt-1">Campus Tucuruí</p>
+          <h1 className="text-xl font-bold sm:text-2xl">IFPA | Simulado Digital</h1>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-slate-500">Campus Tucuruí</p>
         </div>
-        <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-          </span>
-          <span className="text-sm font-medium text-emerald-700">Sistema Operacional</span>
+        <div className="flex items-center gap-3">
+          <StatusSistema />
+          {usuario && (
+            <>
+              <span className="hidden text-sm text-slate-600 sm:inline">{usuario.nome}</span>
+              {aoSair && <Button variant="secondary" onClick={aoSair}>Sair</Button>}
+            </>
+          )}
         </div>
       </header>
-
-      {/* Conteúdo Injetado Dinamicamente */}
-      <main className="mx-auto max-w-6xl p-8">
-        {children}
-      </main>
+      <main className="mx-auto max-w-6xl p-4 sm:p-8">{children}</main>
     </div>
   );
 }
