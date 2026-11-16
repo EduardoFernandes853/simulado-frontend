@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { supabase } from '../../lib/supabase';
+import { mensagemAuth } from '../../lib/erros-auth';
 import { Button } from '../atoms/Button';
 import { Campo } from '../molecules/Campo';
 import { Card } from '../molecules/Card';
@@ -22,19 +23,30 @@ export function LoginForm() {
     setAviso(null);
     setCarregando(true);
 
-    if (modo === 'entrar') {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-      if (error) setErro('E-mail ou senha inválidos.');
-    } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password: senha,
-        options: { data: { nome, matricula } },
-      });
-      if (error) setErro(error.message);
-      else if (!data.session) setAviso('Conta criada. Confirme o e-mail para entrar.');
+    try {
+      if (modo === 'entrar') {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+        if (error) {
+          setErro(mensagemAuth(error));
+        }
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password: senha,
+          options: { data: { nome, matricula } },
+        });
+        if (error) {
+          setErro(mensagemAuth(error));
+        } else if (!data.session) {
+          setAviso('Conta criada. Confirme o e-mail para entrar.');
+        }
+      }
+    } catch (error: any) {
+      // Captura erros de rede brutos caso a API dispare uma exceção em vez de retornar o objeto error
+      setErro(mensagemAuth(error));
+    } finally {
+      setCarregando(false);
     }
-    setCarregando(false);
   }
 
   return (

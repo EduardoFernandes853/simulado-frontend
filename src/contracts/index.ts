@@ -7,7 +7,7 @@ export const AlunoSchema = z.object({
   id: IdSchema,
   nome: z.string(),
   matricula: z.string(),
-  email: z.string().email(),
+  email: z.string(),
   papel: z.enum(['ALUNO', 'PROFESSOR']),
 });
 
