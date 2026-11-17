@@ -48,7 +48,7 @@ export function ListaSimulados({ aoIniciar }: Props) {
               <p className="text-sm text-slate-500">{s.totalQuestoes} questões · {s.duracaoMin} min</p>
             </div>
             <Button onClick={() => iniciar(s.id)} disabled={iniciando !== null}>
-              {iniciando === s.id ? 'Iniciando…' : 'Iniciar'}
+              {iniciando === s.id ? 'Iniciando…' : 'Iniciar / Retomar'}
             </Button>
           </li>
         ))}

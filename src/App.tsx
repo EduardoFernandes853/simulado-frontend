@@ -13,6 +13,7 @@ import { ProvaSimulado } from './components/organisms/ProvaSimulado';
 import { ResultadoDiagnostico } from './components/organisms/ResultadoDiagnostico';
 import { HistoricoResultados } from './components/organisms/HistoricoResultados';
 import { PainelMonitoria } from './components/organisms/PainelMonitoria';
+import { limparTodosRascunhos } from './lib/rascunho';
 
 type Tela =
   | { nome: 'home' }
@@ -31,7 +32,13 @@ function AppAutenticado() {
   }, []);
 
   return (
-    <AppShell usuario={aluno} aoSair={() => supabase.auth.signOut()}>
+    <AppShell 
+      usuario={aluno} 
+      aoSair={() => { 
+        limparTodosRascunhos(); 
+        void supabase.auth.signOut(); 
+      }}
+    >
       {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
       {aluno && (tela.nome === 'home' || tela.nome === 'monitoria') && (
         <div className="space-y-8">
