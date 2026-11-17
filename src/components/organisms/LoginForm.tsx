@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import type { AuthError } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { mensagemAuth } from '../../lib/erros-auth';
 import { Button } from '../atoms/Button';
@@ -41,9 +42,9 @@ export function LoginForm() {
           setAviso('Conta criada. Confirme o e-mail para entrar.');
         }
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Captura erros de rede brutos caso a API dispare uma exceção em vez de retornar o objeto error
-      setErro(mensagemAuth(error));
+      setErro(mensagemAuth(err as AuthError));
     } finally {
       setCarregando(false);
     }
