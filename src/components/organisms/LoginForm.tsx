@@ -7,16 +7,18 @@ import { Button } from '../atoms/Button';
 import { Campo } from '../molecules/Campo';
 import { Card } from '../molecules/Card';
 import { Mensagem } from '../molecules/Mensagem';
+import { RecuperarSenhaForm } from './RecuperarSenhaForm';
 
-export function LoginForm() {
+export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
   const [modo, setModo] = useState<'entrar' | 'cadastrar'>('entrar');
   const [nome, setNome] = useState('');
   const [matricula, setMatricula] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(erroInicial ?? null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
@@ -50,6 +52,8 @@ export function LoginForm() {
     }
   }
 
+  if (recuperando) return <RecuperarSenhaForm aoVoltar={() => setRecuperando(false)} />;
+
   return (
     <div className="mx-auto max-w-md">
       <Card titulo={modo === 'entrar' ? 'Entrar' : 'Criar conta'} destaque>
@@ -67,6 +71,11 @@ export function LoginForm() {
           <Button type="submit" disabled={carregando}>
             {carregando ? 'Aguarde…' : modo === 'entrar' ? 'Entrar' : 'Cadastrar'}
           </Button>
+          {modo === 'entrar' && (
+            <button type="button" className="text-sm text-green-700 underline" onClick={() => setRecuperando(true)}>
+              Esqueci minha senha
+            </button>
+          )}
           <button
             type="button"
             className="text-sm text-green-700 underline"

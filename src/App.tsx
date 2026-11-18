@@ -8,12 +8,14 @@ import type { Aluno, IniciarTentativaResposta, ResultadoTentativa } from './cont
 import { Button } from './components/atoms/Button';
 import { Mensagem } from './components/molecules/Mensagem';
 import { LoginForm } from './components/organisms/LoginForm';
+import { NovaSenha } from './components/organisms/NovaSenha';
 import { ListaSimulados } from './components/organisms/ListaSimulados';
 import { ProvaSimulado } from './components/organisms/ProvaSimulado';
 import { ResultadoDiagnostico } from './components/organisms/ResultadoDiagnostico';
 import { HistoricoResultados } from './components/organisms/HistoricoResultados';
 import { PainelMonitoria } from './components/organisms/PainelMonitoria';
 import { limparTodosRascunhos } from './lib/rascunho';
+import { erroInicialDoLink } from './lib/recuperacao';
 
 type Tela =
   | { nome: 'home' }
@@ -32,11 +34,11 @@ function AppAutenticado() {
   }, []);
 
   return (
-    <AppShell 
-      usuario={aluno} 
-      aoSair={() => { 
-        limparTodosRascunhos(); 
-        void supabase.auth.signOut(); 
+    <AppShell
+      usuario={aluno}
+      aoSair={() => {
+        limparTodosRascunhos();
+        void supabase.auth.signOut();
       }}
     >
       {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
@@ -73,9 +75,11 @@ function AppAutenticado() {
 }
 
 export default function App() {
-  const { sessao, carregando } = useSessao();
+  const { sessao, carregando, recuperando, concluirRecuperacao } = useSessao();
 
   if (carregando) return <AppShell><p className="text-slate-400">Carregando…</p></AppShell>;
-  if (!sessao) return <AppShell><LoginForm /></AppShell>;
+  // A sessão de recuperação é uma sessão completa: sem esta linha o usuário entraria no app sem trocar a senha.
+  if (sessao && recuperando) return <AppShell><NovaSenha aoConcluir={concluirRecuperacao} /></AppShell>;
+  if (!sessao) return <AppShell><LoginForm erroInicial={erroInicialDoLink} /></AppShell>;
   return <AppAutenticado key={sessao.user.id} />;
 }
