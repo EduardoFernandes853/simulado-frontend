@@ -1,9 +1,11 @@
-import { AuthError } from '@supabase/supabase-js';
+import type { AuthError } from '@supabase/supabase-js';
 
 const MENSAGENS: Record<string, string> = {
-  'invalid_credentials': 'E-mail ou senha inválidos.',
-  'user_not_found': 'Usuário não encontrado.',
-  // adicione outros códigos se precisar no futuro
+  invalid_credentials: 'E-mail ou senha inválidos.',
+  user_not_found: 'Usuário não encontrado.',
+  same_password: 'A nova senha deve ser diferente da atual.',
+  otp_expired: 'O link expirou ou já foi usado. Peça um novo.',
+  email_address_not_authorized: 'Não foi possível enviar o e-mail agora. Avise a coordenação do projeto.',
 };
 
 export function mensagemAuth(e: AuthError): string {
