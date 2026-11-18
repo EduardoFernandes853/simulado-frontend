@@ -6,9 +6,10 @@ import { Card } from '../molecules/Card';
 interface Props {
   resultado: ResultadoTentativa;
   aoVoltar: () => void;
+  aoRevisar: () => void;
 }
 
-export function ResultadoDiagnostico({ resultado, aoVoltar }: Props) {
+export function ResultadoDiagnostico({ resultado, aoVoltar, aoRevisar }: Props) {
   return (
     <div className="space-y-6">
       <Card titulo="Resultado do simulado" destaque>
@@ -44,7 +45,10 @@ export function ResultadoDiagnostico({ resultado, aoVoltar }: Props) {
         </ul>
       </Card>
 
-      <Button onClick={aoVoltar}>Voltar ao início</Button>
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={aoRevisar}>Ver gabarito comentado</Button>
+        <Button variant="secondary" onClick={aoVoltar}>Voltar ao início</Button>
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Button } from '../atoms/Button';
 import { Card } from '../molecules/Card';
 import { Mensagem } from '../molecules/Mensagem';
 
-export function HistoricoResultados() {
+export function HistoricoResultados({ aoRevisar }: { aoRevisar: (tentativaId: string) => void }) {
   const [itens, setItens] = useState<HistoricoItem[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -34,11 +34,12 @@ export function HistoricoResultados() {
               <th className="px-4 py-3">Data</th>
               <th className="px-4 py-3">Nota</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {itens?.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">Nenhuma tentativa ainda.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Nenhuma tentativa ainda.</td></tr>
             )}
             {itens?.map((i) => (
               <tr key={i.id}>
@@ -47,6 +48,9 @@ export function HistoricoResultados() {
                 <td className="px-4 py-3 font-semibold">{i.nota?.toFixed(1) ?? '—'}</td>
                 <td className="px-4 py-3">
                   {i.alertaMonitoria ? <Badge tom="vermelho">Monitoria acionada</Badge> : <Badge tom="verde">Adequado</Badge>}
+                </td>
+                <td className="px-4 py-3">
+                  <Button variant="secondary" onClick={() => aoRevisar(i.id)}>Revisar</Button>
                 </td>
               </tr>
             ))}
