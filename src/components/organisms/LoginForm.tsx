@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import type { AuthError } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import { mensagemAuth } from '../../lib/erros-auth';
 import { Button } from '../atoms/Button';
 import { Campo } from '../molecules/Campo';
 import { Card } from '../molecules/Card';
 import { Mensagem } from '../molecules/Mensagem';
+import { RecuperarSenhaForm } from './RecuperarSenhaForm';
 
-export function LoginForm() {
+export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
   const [modo, setModo] = useState<'entrar' | 'cadastrar'>('entrar');
   const [nome, setNome] = useState('');
   const [matricula, setMatricula] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(erroInicial ?? null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
@@ -41,13 +44,15 @@ export function LoginForm() {
           setAviso('Conta criada. Confirme o e-mail para entrar.');
         }
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Captura erros de rede brutos caso a API dispare uma exceção em vez de retornar o objeto error
-      setErro(mensagemAuth(error));
+      setErro(mensagemAuth(err as AuthError));
     } finally {
       setCarregando(false);
     }
   }
+
+  if (recuperando) return <RecuperarSenhaForm aoVoltar={() => setRecuperando(false)} />;
 
   return (
     <div className="mx-auto max-w-md">
@@ -66,6 +71,11 @@ export function LoginForm() {
           <Button type="submit" disabled={carregando}>
             {carregando ? 'Aguarde…' : modo === 'entrar' ? 'Entrar' : 'Cadastrar'}
           </Button>
+          {modo === 'entrar' && (
+            <button type="button" className="text-sm text-green-700 underline" onClick={() => setRecuperando(true)}>
+              Esqueci minha senha
+            </button>
+          )}
           <button
             type="button"
             className="text-sm text-green-700 underline"

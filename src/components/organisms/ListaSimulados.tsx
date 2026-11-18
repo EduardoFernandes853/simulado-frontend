@@ -5,6 +5,7 @@ import type { IniciarTentativaResposta, SimuladoResumo } from '../../contracts';
 import { Button } from '../atoms/Button';
 import { Card } from '../molecules/Card';
 import { Mensagem } from '../molecules/Mensagem';
+import { fimDaTentativa } from '../../lib/tempo';
 
 interface Props {
   aoIniciar: (prova: IniciarTentativaResposta, fimEm: number) => void;
@@ -14,7 +15,7 @@ export function ListaSimulados({ aoIniciar }: Props) {
   const [simulados, setSimulados] = useState<SimuladoResumo[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [iniciando, setIniciando] = useState<string | null>(null);
-
+  
   useEffect(() => {
     get('/simulados', ListaSimuladosSchema)
       .then(setSimulados)
@@ -26,7 +27,8 @@ export function ListaSimulados({ aoIniciar }: Props) {
     setErro(null);
     try {
       const prova = await post(`/simulados/${id}/tentativas`, {}, IniciarTentativaRespostaSchema);
-      aoIniciar(prova, Date.now() + prova.segundosRestantes * 1000);
+      // AQUI ESTÁ A CORREÇÃO: Usando a função pura em vez de Date.now()
+      aoIniciar(prova, fimDaTentativa(prova.segundosRestantes));
     } catch (e) {
       setErro(mensagemDeErro(e));
       setIniciando(null);
@@ -46,7 +48,7 @@ export function ListaSimulados({ aoIniciar }: Props) {
               <p className="text-sm text-slate-500">{s.totalQuestoes} questões · {s.duracaoMin} min</p>
             </div>
             <Button onClick={() => iniciar(s.id)} disabled={iniciando !== null}>
-              {iniciando === s.id ? 'Iniciando…' : 'Iniciar'}
+              {iniciando === s.id ? 'Iniciando…' : 'Iniciar / Retomar'}
             </Button>
           </li>
         ))}

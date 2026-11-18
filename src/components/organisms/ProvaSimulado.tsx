@@ -5,6 +5,8 @@ import type { IniciarTentativaResposta, ResultadoTentativa } from '../../contrac
 import { Button } from '../atoms/Button';
 import { Card } from '../molecules/Card';
 import { Mensagem } from '../molecules/Mensagem';
+import { limparRascunho, lerRascunho, salvarRascunho } from '../../lib/rascunho';
+import type { Respostas } from '../../lib/rascunho';
 
 interface Props {
   prova: IniciarTentativaResposta;
@@ -16,11 +18,15 @@ const formatar = (s: number) =>
   `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
 export function ProvaSimulado({ prova, fimEm, aoFinalizar }: Props) {
-  const [respostas, setRespostas] = useState<Record<string, string>>({});
+  const [respostas, setRespostas] = useState<Respostas>(() => lerRascunho(prova.tentativaId));
   const [restante, setRestante] = useState(prova.segundosRestantes);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const autoEnviado = useRef(false);
+
+  useEffect(() => {
+    if (Object.keys(respostas).length > 0) salvarRascunho(prova.tentativaId, respostas);
+  }, [prova.tentativaId, respostas]);
 
   const enviar = useCallback(async () => {
     if (enviando) return;
@@ -31,6 +37,7 @@ export function ProvaSimulado({ prova, fimEm, aoFinalizar }: Props) {
         respostas: Object.entries(respostas).map(([questaoId, alternativa]) => ({ questaoId, alternativa })),
       };
       const resultado = await post(`/tentativas/${prova.tentativaId}/finalizar`, corpo, ResultadoTentativaSchema);
+      limparRascunho(prova.tentativaId);
       aoFinalizar(resultado);
     } catch (e) {
       setErro(mensagemDeErro(e));
