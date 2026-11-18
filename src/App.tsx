@@ -12,6 +12,7 @@ import { NovaSenha } from './components/organisms/NovaSenha';
 import { ListaSimulados } from './components/organisms/ListaSimulados';
 import { ProvaSimulado } from './components/organisms/ProvaSimulado';
 import { ResultadoDiagnostico } from './components/organisms/ResultadoDiagnostico';
+import { RevisaoProva } from './components/organisms/RevisaoProva';
 import { HistoricoResultados } from './components/organisms/HistoricoResultados';
 import { PainelMonitoria } from './components/organisms/PainelMonitoria';
 import { limparTodosRascunhos } from './lib/rascunho';
@@ -21,7 +22,8 @@ type Tela =
   | { nome: 'home' }
   | { nome: 'monitoria' }
   | { nome: 'prova'; prova: IniciarTentativaResposta; fimEm: number }
-  | { nome: 'resultado'; resultado: ResultadoTentativa };
+  | { nome: 'resultado'; resultado: ResultadoTentativa }
+  | { nome: 'revisao'; tentativaId: string };
 
 function AppAutenticado() {
   const [aluno, setAluno] = useState<Aluno | null>(null);
@@ -53,7 +55,7 @@ function AppAutenticado() {
           {tela.nome === 'home' ? (
             <>
               <ListaSimulados aoIniciar={(prova, fimEm) => setTela({ nome: 'prova', prova, fimEm })} />
-              <HistoricoResultados />
+              <HistoricoResultados aoRevisar={(tentativaId) => setTela({ nome: 'revisao', tentativaId })} />
             </>
           ) : (
             <PainelMonitoria />
@@ -68,7 +70,14 @@ function AppAutenticado() {
         />
       )}
       {aluno && tela.nome === 'resultado' && (
-        <ResultadoDiagnostico resultado={tela.resultado} aoVoltar={() => setTela({ nome: 'home' })} />
+        <ResultadoDiagnostico
+          resultado={tela.resultado}
+          aoVoltar={() => setTela({ nome: 'home' })}
+          aoRevisar={() => setTela({ nome: 'revisao', tentativaId: tela.resultado.tentativaId })}
+        />
+      )}
+      {aluno && tela.nome === 'revisao' && (
+        <RevisaoProva tentativaId={tela.tentativaId} aoVoltar={() => setTela({ nome: 'home' })} />
       )}
     </AppShell>
   );
