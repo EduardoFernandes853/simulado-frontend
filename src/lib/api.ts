@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ZodError } from 'zod';
 import type { ZodType } from 'zod';
 import { supabase } from './supabase';
 
@@ -22,9 +23,13 @@ export async function post<T>(url: string, corpo: unknown, schema: ZodType<T>): 
 }
 
 export function mensagemDeErro(e: unknown): string {
+  if (e instanceof ZodError) {
+    console.error('Resposta fora do contrato:', e.issues); // detalhe só no console
+    return 'O servidor respondeu em um formato inesperado. Atualize a página e tente de novo.';
+  }
   if (axios.isAxiosError(e)) {
     if (!e.response) return 'Sem conexão com o servidor.';
     return (e.response.data as { erro?: string } | undefined)?.erro ?? 'Erro inesperado.';
   }
-  return e instanceof Error ? e.message : 'Erro inesperado.';
+  return 'Erro inesperado.'; // nunca expõe e.message cru
 }
