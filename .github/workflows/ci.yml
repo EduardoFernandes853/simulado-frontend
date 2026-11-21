@@ -18,12 +18,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # valores falsos: o build e os testes não chamam serviço nenhum
       VITE_API_URL: http://localhost:3000
       VITE_SUPABASE_URL: http://localhost:54321
       VITE_SUPABASE_ANON_KEY: chave-anon-somente-para-ci-123456
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: EduardoFernandes853/simulado-backend
+          ref: main
+          path: backend
+      - name: Contratos em dia com o backend
+        run: |
+          diff --strip-trailing-cr backend/src/contracts.ts src/contracts/index.ts
+          rm -rf backend
       - uses: actions/setup-node@v6
         with:
           node-version: 22
