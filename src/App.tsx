@@ -92,3 +92,4 @@ export default function App() {
   if (!sessao) return <AppShell><LoginForm erroInicial={erroInicialDoLink} /></AppShell>;
   return <AppAutenticado key={sessao.user.id} />;
 }
+const x = 1;
