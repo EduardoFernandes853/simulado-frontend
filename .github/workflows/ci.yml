@@ -32,7 +32,7 @@ jobs:
         run: |
           diff --strip-trailing-cr backend/src/contracts.ts src/contracts/index.ts
           rm -rf backend
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
