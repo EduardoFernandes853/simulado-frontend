@@ -22,8 +22,8 @@ jobs:
       VITE_SUPABASE_URL: http://localhost:54321
       VITE_SUPABASE_ANON_KEY: chave-anon-somente-para-ci-123456
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: EduardoFernandes853/simulado-backend
           ref: main
