@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { LoginForm } from './LoginForm';
 import { supabase } from '../../lib/supabase';
+import * as api from '../../lib/api';
 import { DOMINIO_ALUNO } from '../../contracts';
 
 vi.mock('../../lib/supabase', () => ({
   supabase: { auth: { signUp: vi.fn(), signInWithPassword: vi.fn(), resetPasswordForEmail: vi.fn() } },
 }));
+vi.mock('../../lib/api', () => ({ post: vi.fn(), mensagemDeErro: () => 'falha no pedido' }));
 
 const EMAIL = `20261234@${DOMINIO_ALUNO}`;
 
@@ -15,19 +17,19 @@ function abrirCadastro() {
   fireEvent.click(screen.getByRole('button', { name: /não tenho conta/i }));
 }
 
-function preencherCadastro(nome: string, email: string, senha: string) {
+function pedirConvite(nome: string, email: string) {
   fireEvent.change(screen.getByLabelText('Nome completo'), { target: { value: nome } });
   fireEvent.change(screen.getByLabelText('E-mail institucional'), { target: { value: email } });
-  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: senha } });
-  fireEvent.click(screen.getByRole('button', { name: /^cadastrar$/i }));
+  fireEvent.click(screen.getByRole('button', { name: /enviar convite/i }));
 }
 
 beforeEach(() => vi.clearAllMocks());
 
-describe('LoginForm: cadastro', () => {
-  it('não pede matrícula', () => {
+describe('LoginForm: primeiro acesso por convite', () => {
+  it('não pede matrícula nem senha', () => {
     abrirCadastro();
     expect(screen.queryByLabelText(/matrícula/i)).toBeNull();
+    expect(screen.queryByLabelText('Senha')).toBeNull();
   });
 
   it('mostra a matrícula derivada do e-mail digitado', () => {
@@ -36,26 +38,28 @@ describe('LoginForm: cadastro', () => {
     expect(screen.getByText('20261234')).toBeTruthy();
   });
 
-  it('recusa e-mail fora do domínio sem chamar o Supabase', () => {
+  it('recusa e-mail fora do domínio sem chamar a API', () => {
     abrirCadastro();
-    preencherCadastro('Maria Souza', 'maria@gmail.com', 'senha-segura-1');
+    pedirConvite('Maria Souza', 'maria@gmail.com');
     expect(screen.getByRole('alert').textContent).toContain(`@${DOMINIO_ALUNO}`);
-    expect(supabase.auth.signUp).not.toHaveBeenCalled();
+    expect(api.post).not.toHaveBeenCalled();
   });
 
-  it('cadastra com e-mail normalizado, sem matrícula nos metadados, e pede a confirmação', async () => {
-    vi.mocked(supabase.auth.signUp).mockResolvedValue({ data: { user: null, session: null }, error: null } as never);
+  it('pede o convite com e-mail normalizado e mostra a resposta do servidor', async () => {
+    vi.mocked(api.post).mockResolvedValue({ mensagem: 'Convite enviado.' });
     abrirCadastro();
+    pedirConvite('Maria Souza', `20261234@${DOMINIO_ALUNO.toUpperCase()}`);
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/cadastro', { email: EMAIL, nome: 'Maria Souza' }, expect.anything()),
+    );
+    expect((await screen.findByRole('alert')).textContent).toBe('Convite enviado.');
+  });
 
-    preencherCadastro('Maria Souza', `20261234@${DOMINIO_ALUNO.toUpperCase()}`, 'senha-segura-1');
-
-    await waitFor(() => expect(supabase.auth.signUp).toHaveBeenCalledTimes(1));
-    expect(supabase.auth.signUp).toHaveBeenCalledWith({
-      email: EMAIL,
-      password: 'senha-segura-1',
-      options: { data: { nome: 'Maria Souza' }, emailRedirectTo: window.location.origin },
-    });
-    expect((await screen.findByRole('alert')).textContent).toMatch(/link de confirmação/i);
+  it('mostra o erro quando o pedido falha', async () => {
+    vi.mocked(api.post).mockRejectedValue(new Error('x'));
+    abrirCadastro();
+    pedirConvite('Maria Souza', EMAIL);
+    expect((await screen.findByRole('alert')).textContent).toBe('falha no pedido');
   });
 });
 
