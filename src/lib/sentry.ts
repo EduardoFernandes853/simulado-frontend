@@ -11,7 +11,6 @@ export async function iniciarSentry(): Promise<void> {
     dsn,
     environment: 'production',
     release: import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA,
-    sendDefaultPii: false,
     tracesSampleRate: 0,
     // falhas de conexão do aluno não são defeito do sistema (quem avisa é o monitor de disponibilidade)
     ignoreErrors: ['Failed to fetch', 'Load failed', 'NetworkError when attempting to fetch resource.', 'ResizeObserver loop'],
