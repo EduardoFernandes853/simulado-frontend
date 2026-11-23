@@ -30,7 +30,6 @@ function AppAutenticado() {
   const [erro, setErro] = useState<string | null>(null);
   const [tela, setTela] = useState<Tela>({ nome: 'home' });
 
-  // /me cria o cadastro no primeiro acesso; as demais telas só montam depois dele
   useEffect(() => {
     get('/me', AlunoSchema).then(setAluno).catch((e) => setErro(mensagemDeErro(e)));
   }, []);
@@ -85,10 +84,18 @@ function AppAutenticado() {
 
 export default function App() {
   const { sessao, carregando, recuperando, concluirRecuperacao } = useSessao();
+  const [erroDoLink, setErroDoLink] = useState(erroInicialDoLink);
+
+  if (sessao && erroDoLink !== null) setErroDoLink(null);
 
   if (carregando) return <AppShell><p className="text-slate-400">Carregando…</p></AppShell>;
-  // A sessão de recuperação é uma sessão completa: sem esta linha o usuário entraria no app sem trocar a senha.
-  if (sessao && recuperando) return <AppShell><NovaSenha aoConcluir={concluirRecuperacao} /></AppShell>;
-  if (!sessao) return <AppShell><LoginForm erroInicial={erroInicialDoLink} /></AppShell>;
+  if (sessao && recuperando) {
+    return (
+      <AppShell aoSair={() => { void supabase.auth.signOut(); }}>
+        <NovaSenha aoConcluir={concluirRecuperacao} />
+      </AppShell>
+    );
+  }
+  if (!sessao) return <AppShell><LoginForm erroInicial={erroDoLink} /></AppShell>;
   return <AppAutenticado key={sessao.user.id} />;
 }

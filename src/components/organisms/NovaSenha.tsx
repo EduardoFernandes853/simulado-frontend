@@ -26,7 +26,10 @@ export function NovaSenha({ aoConcluir }: { aoConcluir: () => void }) {
     try {
       const { error } = await supabase.auth.updateUser({ password: v.data.senha });
       if (error) setErro(mensagemAuth(error));
-      else aoConcluir();
+      else {
+        try { await supabase.auth.signOut({ scope: 'others' }); } catch { /* melhor esforço */ }
+        aoConcluir();
+      }
     } catch {
       setErro('Sem conexão. Verifique a internet e tente de novo.');
     } finally {
@@ -36,7 +39,7 @@ export function NovaSenha({ aoConcluir }: { aoConcluir: () => void }) {
 
   return (
     <div className="mx-auto max-w-md">
-      <Card titulo="Defina uma nova senha" destaque>
+      <Card titulo="Defina sua senha" destaque>
         <form onSubmit={salvar} className="flex flex-col gap-4">
           <Campo
             rotulo="Nova senha"
