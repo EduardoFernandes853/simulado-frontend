@@ -13,6 +13,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@sentry/react": "^11.16.0",
     "@supabase/supabase-js": "^2.117.1",
     "@tailwindcss/postcss": "^4.3.3",
     "axios": "^1.20.0",
