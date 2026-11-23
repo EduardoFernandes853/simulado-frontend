@@ -34,7 +34,7 @@ jobs:
           diff --strip-trailing-cr backend/src/domain/privacidade.ts src/lib/privacidade.ts
           diff --strip-trailing-cr <(tail -n +2 src/lib/privacidade.test.ts) backend/src/domain/privacidade.test.ts
           rm -rf backend
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
