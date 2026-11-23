@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { registrarErroDeInterface } from '../lib/sentry';
 
 interface Props { 
   children: ReactNode; 
@@ -19,6 +20,7 @@ export class ErrorBoundary extends Component<Props, Estado> {
 
   componentDidCatch(erro: Error, info: ErrorInfo) {
     console.error('Falha de renderização:', erro, info.componentStack);
+    registrarErroDeInterface(erro, info.componentStack);
   }
 
   render() {
