@@ -6,6 +6,7 @@ describe('ehLinkDeRecuperacao', () => {
     ['#access_token=abc&refresh_token=x&type=recovery', '', true],
     ['#type=recovery', '', true],
     ['', '?type=recovery&token_hash=x', true],
+    ['#access_token=abc&type=invite', '', true],
     ['#access_token=abc&type=signup', '', false],
     ['#access_token=abc&type=magiclink', '', false],
     ['', '', false],
@@ -26,7 +27,12 @@ describe('lerCodigoDeErroDoLink', () => {
 });
 
 describe('mensagemDoErroDoLink', () => {
-  it('explica link expirado', () => expect(mensagemDoErroDoLink('otp_expired')).toMatch(/expirou/i));
+  it('explica link expirado e diz o que fazer, sem falar só em "recuperação"', () => {
+    const m = mensagemDoErroDoLink('otp_expired') ?? '';
+    expect(m).toMatch(/expirou/i);
+    expect(m).toMatch(/esqueci minha senha/i);
+    expect(m).toMatch(/convite/i);
+  });
   it('tem mensagem genérica para outros códigos', () => expect(mensagemDoErroDoLink('outro')).toMatch(/novo/i));
   it('não mostra nada quando não há erro', () => expect(mensagemDoErroDoLink(null)).toBeNull());
 });

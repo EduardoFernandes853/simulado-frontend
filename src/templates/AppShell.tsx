@@ -18,12 +18,8 @@ export function AppShell({ children, usuario, aoSair }: AppShellProps) {
         </div>
         <div className="flex items-center gap-3">
           <StatusSistema />
-          {usuario && (
-            <>
-              <span className="hidden text-sm text-slate-600 sm:inline">{usuario.nome}</span>
-              {aoSair && <Button variant="secondary" onClick={aoSair}>Sair</Button>}
-            </>
-          )}
+          {usuario && <span className="hidden text-sm text-slate-600 sm:inline">{usuario.nome}</span>}
+          {aoSair && <Button variant="secondary" onClick={aoSair}>Sair</Button>}
         </div>
       </header>
       <main className="mx-auto max-w-6xl p-4 sm:p-8">{children}</main>

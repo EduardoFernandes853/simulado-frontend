@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NovaSenha } from './NovaSenha';
 import { supabase } from '../../lib/supabase';
 
-vi.mock('../../lib/supabase', () => ({ supabase: { auth: { updateUser: vi.fn() } } }));
+vi.mock('../../lib/supabase', () => ({ supabase: { auth: { updateUser: vi.fn(), signOut: vi.fn() } } }));
 
 const preencher = (senha: string, confirmacao: string) => {
   fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: senha } });
@@ -23,11 +23,22 @@ describe('NovaSenha', () => {
 
   it('atualiza a senha e conclui', async () => {
     vi.mocked(supabase.auth.updateUser).mockResolvedValue({ data: { user: null }, error: null } as never);
+    vi.mocked(supabase.auth.signOut).mockResolvedValue({ error: null } as never);
     const aoConcluir = vi.fn();
     render(<NovaSenha aoConcluir={aoConcluir} />);
     preencher('abc12345', 'abc12345');
     await waitFor(() => expect(aoConcluir).toHaveBeenCalled());
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'abc12345' });
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'others' });
+  });
+
+  it('conclui mesmo se encerrar as outras sessões falhar', async () => {
+    vi.mocked(supabase.auth.updateUser).mockResolvedValue({ data: { user: null }, error: null } as never);
+    vi.mocked(supabase.auth.signOut).mockRejectedValue(new Error('rede'));
+    const aoConcluir = vi.fn();
+    render(<NovaSenha aoConcluir={aoConcluir} />);
+    preencher('abc12345', 'abc12345');
+    await waitFor(() => expect(aoConcluir).toHaveBeenCalled());
   });
 
   it('mostra a mensagem traduzida quando o Supabase recusa', async () => {
