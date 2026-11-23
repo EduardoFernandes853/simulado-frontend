@@ -28,9 +28,11 @@ jobs:
           repository: EduardoFernandes853/simulado-backend
           ref: main
           path: backend
-      - name: Contratos em dia com o backend
+      - name: Contratos e privacidade em dia com o backend
         run: |
           diff --strip-trailing-cr backend/src/contracts.ts src/contracts/index.ts
+          diff --strip-trailing-cr backend/src/domain/privacidade.ts src/lib/privacidade.ts
+          diff --strip-trailing-cr <(tail -n +2 src/lib/privacidade.test.ts) backend/src/domain/privacidade.test.ts
           rm -rf backend
       - uses: actions/setup-node@v6
         with:
