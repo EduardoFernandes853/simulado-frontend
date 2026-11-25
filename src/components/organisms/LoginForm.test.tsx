@@ -52,7 +52,7 @@ describe('LoginForm: primeiro acesso por convite', () => {
     await waitFor(() =>
       expect(api.post).toHaveBeenCalledWith('/cadastro', { email: EMAIL, nome: 'Maria Souza' }, expect.anything()),
     );
-    expect((await screen.findByRole('alert')).textContent).toBe('Convite enviado.');
+    expect((await screen.findByRole('status')).textContent).toBe('Convite enviado.');
   });
 
   it('mostra o erro quando o pedido falha', async () => {

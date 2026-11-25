@@ -48,7 +48,7 @@ export const SECOES_AVISO: SecaoAviso[] = [
     titulo: 'Por quanto tempo guardamos',
     paragrafos: [
       'Enquanto sua conta existir. Contas sem uso por [PRAZO: a confirmar, proposta de 12 meses] são removidas.',
-      'Se você excluir sua conta, seus dados saem do sistema na hora. Cópias de segurança criptografadas são apagadas em até 90 dias.',
+      'Se você excluir sua conta, seus dados saem do banco de dados do sistema na hora. Registros técnicos mantidos por serviços de terceiros (como e-mails enviados e registros de acesso) e as cópias de segurança criptografadas (em até 90 dias) são apagados conforme o prazo de cada serviço.',
     ],
   },
   {

@@ -49,8 +49,7 @@ describe('CienciaAviso', () => {
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
 
-    const alertaErro = await screen.findByText('falha ao registrar');
-    expect(alertaErro.closest('[role="alert"]')).toBeTruthy();
+    expect((await screen.findByRole('alert')).textContent).toBe('falha ao registrar');
     expect(aoConfirmar).not.toHaveBeenCalled();
   });
 });
