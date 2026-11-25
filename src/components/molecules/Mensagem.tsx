@@ -8,7 +8,7 @@ const cores = {
 
 export function Mensagem({ tipo, children }: { tipo: keyof typeof cores; children: ReactNode }) {
   return (
-    <div role="alert" className={`rounded-lg border-l-4 p-3 text-sm ${cores[tipo]}`}>
+    <div role={tipo === 'erro' ? 'alert' : 'status'} className={`rounded-lg border-l-4 p-3 text-sm ${cores[tipo]}`}>
       {children}
     </div>
   );
