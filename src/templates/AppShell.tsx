@@ -5,10 +5,11 @@ import { StatusSistema } from '../components/molecules/StatusSistema';
 interface AppShellProps {
   children: ReactNode;
   usuario?: { nome: string; papel: string } | null;
+  aoAbrirConta?: () => void;
   aoSair?: () => void;
 }
 
-export function AppShell({ children, usuario, aoSair }: AppShellProps) {
+export function AppShell({ children, usuario, aoAbrirConta, aoSair }: AppShellProps) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <header className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-8">
@@ -19,6 +20,7 @@ export function AppShell({ children, usuario, aoSair }: AppShellProps) {
         <div className="flex items-center gap-3">
           <StatusSistema />
           {usuario && <span className="hidden text-sm text-slate-600 sm:inline">{usuario.nome}</span>}
+          {usuario && aoAbrirConta && <Button variant="secondary" onClick={aoAbrirConta}>Minha conta</Button>}
           {aoSair && <Button variant="secondary" onClick={aoSair}>Sair</Button>}
         </div>
       </header>

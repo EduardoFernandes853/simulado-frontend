@@ -9,12 +9,14 @@ import { Campo } from '../molecules/Campo';
 import { Card } from '../molecules/Card';
 import { Mensagem } from '../molecules/Mensagem';
 import { RecuperarSenhaForm } from './RecuperarSenhaForm';
+import { AvisoPrivacidade } from './AvisoPrivacidade';
 
 const DOMINIO = import.meta.env.VITE_DOMINIO_ALUNO || DOMINIO_ALUNO;
 
 export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
   const [modo, setModo] = useState<'entrar' | 'cadastrar'>('entrar');
   const [recuperando, setRecuperando] = useState(false);
+  const [verAviso, setVerAviso] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -31,8 +33,14 @@ export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
     const emailLimpo = email.trim().toLowerCase();
 
     if (modo === 'cadastrar') {
-      if (nome.trim().length < 3) { setErro('Informe o nome completo.'); return; }
-      if (!matriculaDoEmail(emailLimpo, DOMINIO)) { setErro(`Use seu e-mail institucional (matrícula@${DOMINIO}).`); return; }
+      if (nome.trim().length < 3) {
+        setErro('Informe o nome completo.');
+        return;
+      }
+      if (!matriculaDoEmail(emailLimpo, DOMINIO)) {
+        setErro(`Use seu e-mail institucional (matrícula@${DOMINIO}).`);
+        return;
+      }
       setCarregando(true);
       try {
         const resposta = await post('/cadastro', { email: emailLimpo, nome: nome.trim() }, ConviteRespostaSchema);
@@ -57,13 +65,20 @@ export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
   }
 
   if (recuperando) return <RecuperarSenhaForm aoVoltar={() => setRecuperando(false)} />;
+  if (verAviso) return <AvisoPrivacidade aoVoltar={() => setVerAviso(false)} />;
 
   return (
     <div className="mx-auto max-w-md">
       <Card titulo={modo === 'entrar' ? 'Entrar' : 'Primeiro acesso'} destaque>
         <form onSubmit={enviar} className="flex flex-col gap-4">
           {modo === 'cadastrar' && (
-            <Campo rotulo="Nome completo" autoComplete="name" value={nome} onChange={(e) => setNome(e.target.value)} required />
+            <Campo
+              rotulo="Nome completo"
+              autoComplete="name"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+            />
           )}
           <Campo
             rotulo={modo === 'entrar' ? 'E-mail' : 'E-mail institucional'}
@@ -74,7 +89,11 @@ export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          {matricula && <p className="-mt-2 text-sm text-slate-600">Sua matrícula: <strong>{matricula}</strong></p>}
+          {matricula && (
+            <p className="-mt-2 text-sm text-slate-600">
+              Sua matrícula: <strong>{matricula}</strong>
+            </p>
+          )}
           {modo === 'entrar' && (
             <Campo
               rotulo="Senha"
@@ -101,9 +120,16 @@ export function LoginForm({ erroInicial }: { erroInicial?: string | null }) {
           <button
             type="button"
             className="text-sm text-green-700 underline"
-            onClick={() => { setModo(modo === 'entrar' ? 'cadastrar' : 'entrar'); setErro(null); setAviso(null); }}
+            onClick={() => {
+              setModo(modo === 'entrar' ? 'cadastrar' : 'entrar');
+              setErro(null);
+              setAviso(null);
+            }}
           >
             {modo === 'entrar' ? 'Não tenho conta' : 'Já tenho conta'}
+          </button>
+          <button type="button" className="text-sm text-green-700 underline" onClick={() => setVerAviso(true)}>
+            Aviso de privacidade
           </button>
         </form>
       </Card>
