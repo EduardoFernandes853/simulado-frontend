@@ -3,7 +3,7 @@ import { AppShell } from './templates/AppShell';
 import { supabase } from './lib/supabase';
 import { get, mensagemDeErro } from './lib/api';
 import { useSessao } from './hooks/useSessao';
-import { AlunoSchema } from './contracts';
+import { AlunoSchema, VERSAO_AVISO } from './contracts';
 import type { Aluno, IniciarTentativaResposta, ResultadoTentativa } from './contracts';
 import { Button } from './components/atoms/Button';
 import { Mensagem } from './components/molecules/Mensagem';
@@ -15,6 +15,9 @@ import { ResultadoDiagnostico } from './components/organisms/ResultadoDiagnostic
 import { RevisaoProva } from './components/organisms/RevisaoProva';
 import { HistoricoResultados } from './components/organisms/HistoricoResultados';
 import { PainelMonitoria } from './components/organisms/PainelMonitoria';
+import { AvisoPrivacidade } from './components/organisms/AvisoPrivacidade';
+import { CienciaAviso } from './components/organisms/CienciaAviso';
+import { MinhaConta } from './components/organisms/MinhaConta';
 import { limparTodosRascunhos } from './lib/rascunho';
 import { erroInicialDoLink } from './lib/recuperacao';
 
@@ -23,7 +26,9 @@ type Tela =
   | { nome: 'monitoria' }
   | { nome: 'prova'; prova: IniciarTentativaResposta; fimEm: number }
   | { nome: 'resultado'; resultado: ResultadoTentativa }
-  | { nome: 'revisao'; tentativaId: string };
+  | { nome: 'revisao'; tentativaId: string }
+  | { nome: 'conta' }
+  | { nome: 'aviso' };
 
 function AppAutenticado() {
   const [aluno, setAluno] = useState<Aluno | null>(null);
@@ -34,21 +39,34 @@ function AppAutenticado() {
     get('/me', AlunoSchema).then(setAluno).catch((e) => setErro(mensagemDeErro(e)));
   }, []);
 
+  const precisaCiencia = aluno !== null && aluno.avisoVersao !== VERSAO_AVISO;
+  const sair = () => {
+    limparTodosRascunhos();
+    void supabase.auth.signOut();
+  };
+  const aposExcluir = () => {
+    limparTodosRascunhos();
+    void supabase.auth.signOut({ scope: 'local' });
+  };
+
   return (
     <AppShell
       usuario={aluno}
-      aoSair={() => {
-        limparTodosRascunhos();
-        void supabase.auth.signOut();
-      }}
+      aoAbrirConta={() => setTela({ nome: 'conta' })}
+      aoSair={sair}
     >
       {erro && <Mensagem tipo="erro">{erro}</Mensagem>}
-      {aluno && (tela.nome === 'home' || tela.nome === 'monitoria') && (
+      {aluno && precisaCiencia && <CienciaAviso aoConfirmar={setAluno} />}
+      {aluno && !precisaCiencia && (tela.nome === 'home' || tela.nome === 'monitoria') && (
         <div className="space-y-8">
           {aluno.papel === 'PROFESSOR' && (
             <div className="flex gap-2">
-              <Button variant={tela.nome === 'home' ? 'primary' : 'secondary'} onClick={() => setTela({ nome: 'home' })}>Simulados</Button>
-              <Button variant={tela.nome === 'monitoria' ? 'primary' : 'secondary'} onClick={() => setTela({ nome: 'monitoria' })}>Monitoria</Button>
+              <Button variant={tela.nome === 'home' ? 'primary' : 'secondary'} onClick={() => setTela({ nome: 'home' })}>
+                Simulados
+              </Button>
+              <Button variant={tela.nome === 'monitoria' ? 'primary' : 'secondary'} onClick={() => setTela({ nome: 'monitoria' })}>
+                Monitoria
+              </Button>
             </div>
           )}
           {tela.nome === 'home' ? (
@@ -61,22 +79,34 @@ function AppAutenticado() {
           )}
         </div>
       )}
-      {aluno && tela.nome === 'prova' && (
+      {aluno && !precisaCiencia && tela.nome === 'prova' && (
         <ProvaSimulado
           prova={tela.prova}
           fimEm={tela.fimEm}
           aoFinalizar={(resultado) => setTela({ nome: 'resultado', resultado })}
         />
       )}
-      {aluno && tela.nome === 'resultado' && (
+      {aluno && !precisaCiencia && tela.nome === 'resultado' && (
         <ResultadoDiagnostico
           resultado={tela.resultado}
           aoVoltar={() => setTela({ nome: 'home' })}
           aoRevisar={() => setTela({ nome: 'revisao', tentativaId: tela.resultado.tentativaId })}
         />
       )}
-      {aluno && tela.nome === 'revisao' && (
+      {aluno && !precisaCiencia && tela.nome === 'revisao' && (
         <RevisaoProva tentativaId={tela.tentativaId} aoVoltar={() => setTela({ nome: 'home' })} />
+      )}
+      {aluno && !precisaCiencia && tela.nome === 'conta' && (
+        <MinhaConta
+          aluno={aluno}
+          aoAtualizar={setAluno}
+          aoVoltar={() => setTela({ nome: 'home' })}
+          aoVerAviso={() => setTela({ nome: 'aviso' })}
+          aoExcluir={aposExcluir}
+        />
+      )}
+      {aluno && !precisaCiencia && tela.nome === 'aviso' && (
+        <AvisoPrivacidade aoVoltar={() => setTela({ nome: 'conta' })} />
       )}
     </AppShell>
   );

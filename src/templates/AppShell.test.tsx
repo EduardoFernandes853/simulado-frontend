@@ -26,4 +26,20 @@ describe('AppShell', () => {
     render(<AppShell><p>conteúdo</p></AppShell>);
     expect(screen.getByText('conteúdo')).toBeTruthy();
   });
+
+  it('mostra "Minha conta" quando há usuário e destino', () => {
+    const aoAbrirConta = vi.fn();
+    render(
+      <AppShell usuario={{ nome: 'Maria Souza', papel: 'ALUNO' }} aoAbrirConta={aoAbrirConta} aoSair={vi.fn()}>
+        <p>x</p>
+      </AppShell>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /minha conta/i }));
+    expect(aoAbrirConta).toHaveBeenCalledTimes(1);
+  });
+
+  it('não mostra "Minha conta" sem usuário carregado', () => {
+    render(<AppShell aoAbrirConta={vi.fn()} aoSair={vi.fn()}><p>x</p></AppShell>);
+    expect(screen.queryByRole('button', { name: /minha conta/i })).toBeNull();
+  });
 });
